@@ -4,6 +4,7 @@ import pathlib
 from typing import Callable
 
 from stable_baselines3 import PPO
+from sb3_contrib import RecurrentPPO
 from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.vec_env.vec_monitor import VecMonitor
 
@@ -106,6 +107,19 @@ parser.add_argument(
     type=int,
     help="How many instances of the environment executable to " "launch - requires --env_path to be set if > 1.",
 )
+parser.add_argument("--learning_rate", default=0.0003, type=float, help="learning rate (default 0.0003)")
+parser.add_argument("--n_steps", default=32, type=int, help="Number of steps to run for each environment per update (default 32)."
+                    "In case of LSTM-PPO, this is also the number of time steps")
+parser.add_argument("--minibatch_size", default=32, type=int, help="minibatch size (default 32)")
+# According to sb3-contrib documentation, the default for number of LSTM units is 256 (usually way too large)
+parser.add_argument("--lstm_hidden_size", default=16, type=int, help="Number of units in the LSTM layer (default 16). Only applies when --recurrent is provided")
+parser.add_argument(
+    "--recurrent",
+    default=False,
+    action="store_true",
+    help="Utilize PPO-LSTM (recurrent neural network). If not provided, utilize PPO (3-layer feed-forward MLP) instead.",
+)
+
 args, extras = parser.parse_known_args()
 
 
@@ -187,16 +201,31 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
 
 
 if args.resume_model_path is None:
-    learning_rate = 0.0003 if not args.linear_lr_schedule else linear_schedule(0.0003)
-    model: PPO = PPO(
-        "MultiInputPolicy",
-        env,
-        ent_coef=0.0001,
-        verbose=2,
-        n_steps=32,
-        tensorboard_log=args.experiment_dir,
-        learning_rate=learning_rate,
-    )
+    learning_rate = args.learning_rate if not args.linear_lr_schedule else linear_schedule(args.learning_rate)
+
+    if args.recurrent:
+        model: PPO = RecurrentPPO(
+            "MultiInputLstmPolicy",
+            env,
+            ent_coef=0.0001,
+            verbose=2,
+            n_steps=args.n_steps,
+            tensorboard_log=args.experiment_dir,
+            learning_rate=learning_rate,
+            batch_size=args.minibatch_size,
+            policy_kwargs = {"lstm_hidden_size": args.lstm_hidden_size}
+        )
+    else:
+        model: PPO = PPO(
+            "MultiInputPolicy",
+            env,
+            ent_coef=0.0001,
+            verbose=2,
+            n_steps=args.n_steps,
+            tensorboard_log=args.experiment_dir,
+            learning_rate=learning_rate,
+            batch_size=args.minibatch_size,
+        )
 else:
     path_zip = pathlib.Path(args.resume_model_path)
     print("Loading model: " + os.path.abspath(path_zip))
