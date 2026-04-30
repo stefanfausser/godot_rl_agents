@@ -171,6 +171,9 @@ if args.inference and args.resume_model_path is None:
 if args.env_path is None and args.viz:
     print("Info: Using --viz without --env_path set has no effect, in-editor training will always render.")
 
+if args.onnx_export_path is not None and args.recurrent:
+    raise RuntimeError("ONNX export of LSTM model is currently not supported")
+
 env = StableBaselinesGodotEnv(
     env_path=args.env_path, show_window=args.viz, seed=args.seed, n_parallel=args.n_parallel, speedup=args.speedup
 )
