@@ -97,7 +97,7 @@ def export_model_as_onnx(model, onnx_model_path: str, use_obs_array: bool = Fals
             "output": {0: "batch_size"},
             "state_outs": {0: "batch_size"},
         },
-        **dynamo_kwargs
+        **dynamo_kwargs,
     )
 
     # We only verify with PPO currently due to different output shape with SAC
