@@ -1,7 +1,8 @@
+import inspect
+
 import torch
 from gymnasium import spaces
 from stable_baselines3 import PPO, SAC
-import inspect
 
 
 class OnnxablePolicy(torch.nn.Module):
