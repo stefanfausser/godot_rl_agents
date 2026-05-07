@@ -102,6 +102,12 @@ parser.add_argument(
 )
 parser.add_argument("--speedup", default=1, type=int, help="Whether to speed up the physics in the env")
 parser.add_argument(
+    "--action_repeat",
+    default=None,
+    type=int,
+    help="Similar concept to frame skip, sends action/gets obs every n frames only. Uses sync node setting if not set here.",
+)
+parser.add_argument(
     "--n_parallel",
     default=1,
     type=int,
@@ -175,7 +181,12 @@ if args.onnx_export_path is not None and args.recurrent:
     raise RuntimeError("ONNX export of LSTM model is currently not supported")
 
 env = StableBaselinesGodotEnv(
-    env_path=args.env_path, show_window=args.viz, seed=args.seed, n_parallel=args.n_parallel, speedup=args.speedup
+    env_path=args.env_path,
+    show_window=args.viz,
+    seed=args.seed,
+    n_parallel=args.n_parallel,
+    speedup=args.speedup,
+    action_repeat=args.action_repeat,
 )
 env = VecMonitor(env)
 
@@ -252,9 +263,7 @@ else:
     try:
         model.learn(**learn_arguments)
     except (KeyboardInterrupt, ConnectionError, ConnectionResetError):
-        print(
-            """Training interrupted by user or a ConnectionError. Will save if --save_model_path was
-            used and/or export if --onnx_export_path was used."""
-        )
+        print("""Training interrupted by user or a ConnectionError. Will save if --save_model_path was
+            used and/or export if --onnx_export_path was used.""")
     finally:
         cleanup()
