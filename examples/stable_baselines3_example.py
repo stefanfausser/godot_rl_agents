@@ -4,7 +4,6 @@ import pathlib
 from typing import Callable
 
 from stable_baselines3 import PPO
-from sb3_contrib import RecurrentPPO
 from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.vec_env.vec_monitor import VecMonitor
 
@@ -113,17 +112,27 @@ parser.add_argument(
     type=int,
     help="How many instances of the environment executable to " "launch - requires --env_path to be set if > 1.",
 )
-parser.add_argument("--learning_rate", default=0.0003, type=float, help="learning rate (default 0.0003)")
-parser.add_argument("--n_steps", default=32, type=int, help="Number of steps to run for each environment per update (default 32)."
-                    "In case of LSTM-PPO, this is also the number of time steps")
-parser.add_argument("--minibatch_size", default=32, type=int, help="minibatch size (default 32)")
-# According to sb3-contrib documentation, the default for number of LSTM units is 256 (usually way too large)
-parser.add_argument("--lstm_hidden_size", default=16, type=int, help="Number of units in the LSTM layer (default 16). Only applies when --recurrent is provided")
+parser.add_argument("--learning_rate", default=0.0003, type=float, help="The learning rate (default 0.0003)")
 parser.add_argument(
-    "--recurrent",
-    default=False,
-    action="store_true",
-    help="Utilize PPO-LSTM (recurrent neural network). If not provided, utilize PPO (3-layer feed-forward MLP) instead.",
+    "--n_steps",
+    default=32,
+    type=int,
+    help="Number of steps to run for each environment per update (default 32).",
+)
+parser.add_argument(
+    "--batch_size",
+    default=32,
+    type=int,
+    help="The minibatch size (default 32). The rollout size = n_steps × n_envs must be divisible by batch_size without remainder",
+)
+parser.add_argument(
+    "--ent_coef", default=0.0001, type=float, help="The entropy coefficient for the loss calculation (default 0.0001)"
+)
+parser.add_argument(
+    "--clip_range",
+    default=0.2,
+    type=float,
+    help="The clipping range (default 0.2). This limits the policy changes per update",
 )
 
 args, extras = parser.parse_known_args()
@@ -177,9 +186,6 @@ if args.inference and args.resume_model_path is None:
 if args.env_path is None and args.viz:
     print("Info: Using --viz without --env_path set has no effect, in-editor training will always render.")
 
-if args.onnx_export_path is not None and args.recurrent:
-    raise RuntimeError("ONNX export of LSTM model is currently not supported")
-
 env = StableBaselinesGodotEnv(
     env_path=args.env_path,
     show_window=args.viz,
@@ -217,29 +223,17 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
 if args.resume_model_path is None:
     learning_rate = args.learning_rate if not args.linear_lr_schedule else linear_schedule(args.learning_rate)
 
-    if args.recurrent:
-        model: PPO = RecurrentPPO(
-            "MultiInputLstmPolicy",
-            env,
-            ent_coef=0.0001,
-            verbose=2,
-            n_steps=args.n_steps,
-            tensorboard_log=args.experiment_dir,
-            learning_rate=learning_rate,
-            batch_size=args.minibatch_size,
-            policy_kwargs = {"lstm_hidden_size": args.lstm_hidden_size}
-        )
-    else:
-        model: PPO = PPO(
-            "MultiInputPolicy",
-            env,
-            ent_coef=0.0001,
-            verbose=2,
-            n_steps=args.n_steps,
-            tensorboard_log=args.experiment_dir,
-            learning_rate=learning_rate,
-            batch_size=args.minibatch_size,
-        )
+    model: PPO = PPO(
+        "MultiInputPolicy",
+        env,
+        ent_coef=args.ent_coef,
+        verbose=2,
+        n_steps=args.n_steps,
+        tensorboard_log=args.experiment_dir,
+        learning_rate=learning_rate,
+        batch_size=args.batch_size,
+        clip_range=args.clip_range,
+    )
 else:
     path_zip = pathlib.Path(args.resume_model_path)
     print("Loading model: " + os.path.abspath(path_zip))
