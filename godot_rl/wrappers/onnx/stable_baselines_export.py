@@ -1,3 +1,5 @@
+import inspect
+
 import torch
 from gymnasium import spaces
 from stable_baselines3 import PPO, SAC
@@ -76,6 +78,13 @@ def export_model_as_onnx(model, onnx_model_path: str, use_obs_array: bool = Fals
         onnxable_model = OnnxablePolicy(actor=model.policy.actor)
         dummy_input = torch.randn(1, *model.observation_space.shape)
 
+    dynamo_kwargs = {}
+
+    if "dynamo" in inspect.signature(torch.onnx.export).parameters:
+        # PyTorch 2.5 introduced a new export logic that could be enabled with dynamo=True
+        # However, since PyTorch 2.9, dynamo is True by default. Setting it back to False
+        dynamo_kwargs["dynamo"] = False
+
     torch.onnx.export(
         onnxable_model,
         args=(dummy_input, torch.zeros(1).float()),
@@ -89,6 +98,7 @@ def export_model_as_onnx(model, onnx_model_path: str, use_obs_array: bool = Fals
             "output": {0: "batch_size"},
             "state_outs": {0: "batch_size"},
         },
+        **dynamo_kwargs,
     )
 
     # We only verify with PPO currently due to different output shape with SAC
