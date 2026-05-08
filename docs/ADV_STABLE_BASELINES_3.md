@@ -72,7 +72,7 @@ python stable_baselines3_example.py --env_path=path_to_executable --learning_rat
 
 ### Train an exported environment using a larger-than-default rollout buffer:
 ```bash
-python stable_baselines3_example.py --env_path=path_to_executable --n_steps 64 --batch_size 64
+python stable_baselines3_example.py --env_path=path_to_executable --n_steps 128
 ```
 The rollout size = n_steps × n_envs must be divisible by batch_size without remainder. Generally, larger rollout sizes yield more stable updates but require more memory and may slow down learning.
 

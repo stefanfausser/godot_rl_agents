@@ -115,15 +115,15 @@ parser.add_argument(
 parser.add_argument("--learning_rate", default=0.0003, type=float, help="The learning rate (default 0.0003)")
 parser.add_argument(
     "--n_steps",
-    default=32,
+    default=64,
     type=int,
-    help="Number of steps to run for each environment per update (default 32).",
+    help="Number of steps to run for each environment per update (default 64).",
 )
 parser.add_argument(
     "--batch_size",
-    default=32,
+    default=64,
     type=int,
-    help="The minibatch size (default 32). The rollout size = n_steps × n_envs must be divisible by batch_size without remainder",
+    help="The minibatch size (default 64). The rollout size = n_steps × n_envs must be divisible by batch_size without remainder",
 )
 parser.add_argument(
     "--ent_coef", default=0.0001, type=float, help="The entropy coefficient for the loss calculation (default 0.0001)"
