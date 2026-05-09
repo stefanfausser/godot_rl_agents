@@ -65,6 +65,17 @@ python stable_baselines3_example.py --env_path=path_to_executable --n_parallel=4
 python stable_baselines3_example.py --env_path=path_to_executable --speedup=8
 ```
 
+### Train an exported environment using a learning rate and clipping range for more conservative updates:
+```bash
+python stable_baselines3_example.py --env_path=path_to_executable --learning_rate 0.0002 --clip_range 0.15
+```
+
+### Train an exported environment using a larger-than-default rollout buffer:
+```bash
+python stable_baselines3_example.py --env_path=path_to_executable --n_steps 128
+```
+The rollout size = n_steps × n_envs must be divisible by batch_size without remainder. Generally, larger rollout sizes yield more stable updates but require more memory and may slow down learning.
+
 ### Set an experiment directory and name:
 You can optionally set an experiment directory and name to override the default. When saving checkpoints, you need to use a unique directory or name for each run (more about that below).
 ```bash
