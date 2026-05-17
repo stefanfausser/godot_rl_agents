@@ -4,7 +4,7 @@ This example is based on the SB3 example but adjusted to use the sb3-contrib pac
 
 Github repository: https://github.com/Stable-Baselines-Team/stable-baselines3-contrib
 
-Please note that in addition to the godot-rl[sb3] package, you need to install sb3-contrib:
+Please note that you need to install sb3-contrib:
 
 ## Installation
 ```bash
