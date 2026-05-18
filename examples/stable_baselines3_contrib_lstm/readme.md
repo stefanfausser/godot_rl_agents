@@ -8,7 +8,7 @@ Please note that you need to install sb3-contrib:
 
 ## Installation
 ```bash
-pip install godot-rl[sb3] sb3-contrib
+pip install godot-rl sb3-contrib
 ```
 
 ## Basic Environment Usage
