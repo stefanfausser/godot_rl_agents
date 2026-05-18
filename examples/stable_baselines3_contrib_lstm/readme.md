@@ -1,4 +1,4 @@
-# StableBaselines3 contrib 
+# StableBaselines3 contrib PPO-LSTM example
 
 This example is based on the SB3 example but adjusted to use the sb3-contrib package instead. This allows for PPO-LSTM.
 
